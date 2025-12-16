@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Details (P7901) - Solarastra EPC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f7fafc; }
+        .tab-button { transition: background-color 0.2s, border-color 0.2s; }
+        .card-shadow { box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .task-done { text-decoration: line-through; color: #6b7280; }
+    </style>
+</head>
+<body>
+    <!-- Firebase SDK Imports -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // --- Global Variables (Provided by Canvas Environment) ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db;
+        // Bypassing Auth: Set to true immediately. NO AUTH CODE REMAINS.
+        let isAuthReady = true; 
+        
+        // Project ID for this page (Hardcoded for single-page demonstration)
+        const PROJECT_ID = 'P7901';
+        
+        // FIX: Using PUBLIC path (artifacts/{appId}/public/data/{collection}/{PROJECT_ID})
+        // This attempts to bypass user-specific authentication rules.
+        const BASE_COLLECTION_NAME = 'project_tasks'; 
+
+        // Define a default tasks template
+        const TEMPLATE_TASKS = [
+            { id: crypto.randomUUID(), name: "Lead Qualification Review", owner: "Unassigned", completed: false, required: true },
+            { id: crypto.randomUUID(), name: "Site Survey & Measurement", owner: "Manoj K.", completed: false, required: true },
+            { id: crypto.randomUUID(), name: "Generate Final Quote & Proposal", owner: "Preeti S.", completed: false, required: true },
+            { id: crypto.randomUUID(), name: "Submit Subsidy Application", owner: "Preeti S.", completed: false, required: true },
+            { id: crypto.randomUUID(), name: "Customer Contract Finalization", owner: "Unassigned", completed: false, required: true },
+            { id: crypto.randomUUID(), name: "Raise Procurement Request", owner: "Prakash R.", completed: false, required: true },
+            { id: crypto.randomUUID(), name: "Installation Scheduling", owner: "Manoj K.", completed: false, required: true },
+        ];
+
+        window.TEAM_MEMBERS = [
+            "Unassigned",
+            "Manoj K.",
+            "Preeti S.",
+            "Prakash R.",
+            "Ravi V."
+        ];
+        
+        // --- UI Rendering Functions ---
+        function renderTasks(tasks) {
+            const list = document.getElementById('project-task-list');
+            if (!list) return;
+
+            list.innerHTML = tasks.map(task => `
+                <li id="task-${task.id}" class="p-4 rounded flex justify-between items-center transition duration-200 ${task.completed ? 'bg-green-100 task-done' : 'bg-white border border-gray-200 hover:shadow-sm'}">
+                    <div class="flex items-center space-x-4 w-1/2">
+                        <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="window.toggleTaskCompletion('${task.id}', ${task.completed})" class="form-checkbox h-5 w-5 text-green-600 rounded">
+                        <span class="font-semibold text-gray-800">${task.name}</span>
+                    </div>
+                    
+                    <div class="flex items-center space-x-3 w-1/2 justify-end">
+                        <!-- Assignee Dropdown -->
+                        <select onchange="window.assignTask('${task.id}', this.value)" class="p-2 border rounded-lg text-sm bg-gray-50 focus:border-yellow-500">
+                            ${window.TEAM_MEMBERS.map(member => `
+                                <option value="${member}" ${task.owner === member ? 'selected' : ''}>${member}</option>
+                            `).join('')}
+                        </select>
+                        
+                        <!-- Remove Button -->
+                        <button onclick="window.removeTask('${task.id}')" class="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50 transition duration-150">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        // --- Firestore CRUD Functions ---
+        async function getProjectDoc() {
+            if (!db) return; 
+            // Using PUBLIC path for anonymous access attempt
+            const docPath = `artifacts/${appId}/public/data/${BASE_COLLECTION_NAME}`;
+            return doc(db, docPath, PROJECT_ID);
+        }
+
+        async function initializeTasksIfEmpty() {
+            if (!isAuthReady) return;
+
+            const projectDocRef = await getProjectDoc();
+            if (!projectDocRef) return;
+
+            try {
+                const docSnap = await getDoc(projectDocRef);
+                // Check if document exists OR if it exists but the tasks array is empty
+                if (!docSnap.exists() || !docSnap.data().tasks || docSnap.data().tasks.length === 0) {
+                    console.log("[Firestore] Attempting to initialize tasks from template (setDoc).");
+                    await setDoc(projectDocRef, { tasks: TEMPLATE_TASKS });
+                }
+            } catch (error) {
+                // If permission error occurs, log it AND provide UI feedback.
+                if (error.code === 'permission-denied') {
+                    console.error("[Firestore] Initialization blocked by permissions. Stopping setDoc attempt.");
+                    showSimulatedAlert("Initialization Failed", "Tasks feature is blocked by security rules (Permission Denied).", "red");
+                } else {
+                    console.error("[Firestore] Unexpected Error during initialization:", error);
+                }
+            }
+        }
+
+        window.loadTasks = function() {
+            if (!isAuthReady) return;
+
+            setLogLevel('debug'); // Enable logging for debugging
+            
+            // 1. Attempt initialization (which tries a setDoc if needed)
+            initializeTasksIfEmpty().then(async () => {
+                const projectDocRef = await getProjectDoc();
+                if (!projectDocRef) {
+                     document.getElementById('project-task-list').innerHTML = `<li class="p-4 text-center text-red-500 font-bold">Error: Database connection not ready.</li>`;
+                     return;
+                }
+                
+                // 2. Set up the real-time listener
+                onSnapshot(projectDocRef, (doc) => {
+                    const data = doc.data();
+                    if (data && data.tasks) {
+                        const tasks = data.tasks.sort((a, b) => {
+                            if (a.completed !== b.completed) return a.completed ? 1 : -1;
+                            return 0;
+                        });
+                        renderTasks(tasks);
+                    } else {
+                        renderTasks(TEMPLATE_TASKS); 
+                    }
+                }, async (error) => {
+                    // Listener error handler - attempt a read-once (getDoc) as fallback
+                    console.error("[Firestore] Firestore snapshot error:", error);
+                    
+                    if (error.code === 'permission-denied') {
+                        try {
+                            const readOnceDoc = await getDoc(projectDocRef);
+                            const data = readOnceDoc.data();
+                            if (data && data.tasks) {
+                                renderTasks(data.tasks); // Render successfully read data
+                                console.log("[Firestore] Fallback read successful. Real-time updates blocked.");
+                                return;
+                            }
+                        } catch (readError) {
+                            console.error("[Firestore] Fallback getDoc also failed:", readError);
+                        }
+                    }
+                    
+                    document.getElementById('project-task-list').innerHTML = `<li class="p-4 text-center text-red-500 font-bold">Error: Could not load tasks. Permission denied.</li>`;
+                });
+            });
+        };
+        
+        async function updateTasks(tasks) {
+             if (!isAuthReady) return;
+             const projectDocRef = await getProjectDoc();
+             if (!projectDocRef) return;
+
+             try {
+                await setDoc(projectDocRef, { tasks: tasks });
+             } catch(error) {
+                console.error("[Firestore] Error updating tasks:", error);
+                showSimulatedAlert("Permission Denied", "Could not save task changes. Check EPC portal authorization.", "red");
+             }
+        }
+        
+        window.addTask = async function() {
+            if (!isAuthReady) return showSimulatedAlert("Connection Error", "Please wait for database connection to be established.", "red");
+
+            const taskNameInput = document.getElementById('new-task-name');
+            const taskOwnerSelect = document.getElementById('new-task-owner');
+            
+            const name = taskNameInput.value.trim();
+            const owner = taskOwnerSelect.value;
+            
+            if (name === "") {
+                showSimulatedAlert("Input Required", "Please enter a task description.", "red");
+                return;
+            }
+
+            const projectDocRef = await getProjectDoc();
+            if (!projectDocRef) return;
+            
+            let currentTasks = [];
+            try {
+                const docSnap = await getDoc(projectDocRef);
+                currentTasks = docSnap.data()?.tasks || [];
+            } catch (e) {
+                console.error("Failed to read current tasks for adding:", e);
+                showSimulatedAlert("Permission Error", "Failed to read current tasks. Cannot add new task.", "red");
+                return;
+            }
+
+            const newTask = {
+                id: crypto.randomUUID(),
+                name: name,
+                owner: owner,
+                completed: false,
+                required: false // Custom added task
+            };
+            
+            currentTasks.unshift(newTask); // Add to the top
+            await updateTasks(currentTasks);
+            
+            taskNameInput.value = ''; // Clear input
+        }
+
+        window.removeTask = async function(taskId) {
+            if (!isAuthReady) return;
+            if (!confirmRemove()) return; 
+
+            const projectDocRef = await getProjectDoc();
+            if (!projectDocRef) return;
+
+            let currentTasks = [];
+            try {
+                const docSnap = await getDoc(projectDocRef);
+                currentTasks = docSnap.data()?.tasks || [];
+            } catch (e) {
+                console.error("Failed to read current tasks for removal:", e);
+                showSimulatedAlert("Permission Error", "Failed to read current tasks. Cannot remove task.", "red");
+                return;
+            }
+            
+            const updatedTasks = currentTasks.filter(task => task.id !== taskId);
+            await updateTasks(updatedTasks);
+        }
+        
+        // Helper function for custom confirmation modal
+        function confirmRemove() {
+            const result = prompt("Type 'CONFIRM' to remove this task:"); 
+            return result === 'CONFIRM';
+        }
+
+
+        window.toggleTaskCompletion = async function(taskId, currentStatus) {
+            if (!isAuthReady) return;
+
+            const projectDocRef = await getProjectDoc();
+            if (!projectDocRef) return;
+
+            let currentTasks = [];
+            try {
+                const docSnap = await getDoc(projectDocRef);
+                currentTasks = docSnap.data()?.tasks || [];
+            } catch (e) {
+                console.error("Failed to read current tasks for toggling:", e);
+                showSimulatedAlert("Permission Error", "Failed to read current tasks. Cannot toggle completion.", "red");
+                return;
+            }
+            
+            const taskIndex = currentTasks.findIndex(t => t.id === taskId);
+            if (taskIndex !== -1) {
+                currentTasks[taskIndex].completed = !currentStatus;
+                await updateTasks(currentTasks);
+            }
+        }
+        
+        window.assignTask = async function(taskId, newOwner) {
+             if (!isAuthReady) return;
+
+             const projectDocRef = await getProjectDoc();
+             if (!projectDocRef) return;
+
+             let currentTasks = [];
+             try {
+                 const docSnap = await getDoc(projectDocRef);
+                 currentTasks = docSnap.data()?.tasks || [];
+             } catch (e) {
+                 console.error("Failed to read current tasks for assigning:", e);
+                 showSimulatedAlert("Permission Error", "Failed to read current tasks. Cannot assign task.", "red");
+                 return;
+             }
+             
+             const taskIndex = currentTasks.findIndex(t => t.id === taskId);
+             if (taskIndex !== -1) {
+                 currentTasks[taskIndex].owner = newOwner;
+                 await updateTasks(currentTasks);
+             }
+        }
+        
+        // --- Initialization (Bypassing Auth) ---
+        const initDB = () => {
+            try {
+                // Initialize Firebase App and Firestore only (skipping Auth)
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                console.log("[Firebase] Database initialized without explicit authentication.");
+            } catch (error) {
+                console.error("[Firebase] Fatal Database Initialization Error:", error);
+            }
+        };
+        
+        initDB();
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            // Populate assignee dropdown for new tasks
+            const ownerSelect = document.getElementById('new-task-owner');
+            if (ownerSelect) {
+                ownerSelect.innerHTML = window.TEAM_MEMBERS.map(member => 
+                    `<option value="${member}">${member}</option>`
+                ).join('');
+            }
+            // Load data immediately since isAuthReady is true
+            window.loadTasks(); 
+        });
+
+    </script>
+    
+    <!-- Navigation Header (Matched to index.html EPC style) -->
+    <header class="bg-gray-800 shadow-lg sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <a href="epc-dashboard.html" class="flex items-center space-x-2">
+                    <img src="logo-orange.jpg" onerror="this.onerror=null;this.src='https://placehold.co/40x40/f97316/ffffff?text=SA';" alt="Solarastra Logo" class="h-10 w-auto rounded-full shadow-md">
+                    <span class="text-2xl font-extrabold text-white">Solarastra EPC</span>
+                </a>
+                <nav class="flex space-x-6 items-center">
+                    <a href="epc-dashboard.html" class="text-gray-300 hover:text-yellow-400 transition duration-300">Dashboard</a>
+                    <a href="#" class="text-yellow-400 font-bold">Project P7901</a>
+                    <!-- Logout button removed since no authentication is required -->
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content - Project Details -->
+    <main class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-extrabold text-gray-900">Project P7901: Priya Singh (Delhi, 8kWp)</h1>
+            <span class="px-4 py-2 bg-yellow-500 text-gray-900 text-sm font-extrabold rounded-full shadow-md">STATUS: Quote Drafting</span>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="border-b border-gray-300 mb-6">
+            <nav class="flex space-x-6" id="project-tabs">
+                <button class="tab-button py-3 px-4 text-base font-extrabold border-b-4 border-yellow-500 text-yellow-600 hover:text-yellow-800" data-tab="quote">Quote & BOM</button>
+                <button class="tab-button py-3 px-4 text-base font-extrabold border-b-4 border-transparent text-gray-500 hover:border-gray-400 hover:text-gray-700" data-tab="tasks">Tasks & Milestones</button>
+                <button class="tab-button py-3 px-4 text-base font-extrabold border-b-4 border-transparent text-gray-500 hover:border-gray-400 hover:text-gray-700" data-tab="procurement">Procurement</button>
+            </nav>
+        </div>
+
+        <!-- Tab Content Containers -->
+        <div id="tab-content">
+
+            <!-- Tab 1: Quote & BOM (Unchanged structure) -->
+            <div id="quote" class="tab-pane space-y-6">
+                <div class="bg-white p-8 rounded-xl card-shadow border-t-8 border-yellow-500">
+                    <h2 class="text-2xl font-extrabold mb-4 text-gray-800">Quote Generation & BOM Adjustment</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- System Sizing -->
+                        <div>
+                            <label for="system-size" class="block text-sm font-bold text-gray-700">System Size (kWp)</label>
+                            <input type="number" id="system-size" value="8.0" step="0.5" class="mt-1 block w-full rounded-lg border border-gray-300 p-3 shadow-sm focus:border-green-500 focus:ring-green-500">
+                        </div>
+                        <!-- Final Quote Price -->
+                        <div>
+                            <label for="final-price" class="block text-sm font-bold text-gray-700">Final Customer Price (₹ INR)</label>
+                            <input type="text" id="final-price" value="480,000" class="mt-1 block w-full rounded-lg border border-gray-300 p-3 shadow-sm bg-gray-100 font-bold text-lg">
+                        </div>
+                    </div>
+                    
+                    <!-- BOM Table -->
+                    <h3 class="text-xl font-extrabold mt-8 mb-3 text-gray-800 border-t pt-4">Bill of Materials (BOM)</h3>
+                    <table class="min-w-full divide-y divide-gray-300 border border-gray-200 rounded-lg overflow-hidden">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-extrabold text-gray-600 uppercase">Item</th>
+                                <th class="px-6 py-3 text-left text-xs font-extrabold text-gray-600 uppercase">Model/Spec</th>
+                                <th class="px-6 py-3 text-left text-xs font-extrabold text-gray-600 uppercase">Qty</th>
+                                <th class="px-6 py-3 text-right text-xs font-extrabold text-gray-600 uppercase">Unit Cost (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">PV Modules</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">330W Mono PERC</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">25</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-right">12,000</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">Inverter</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">8kW 3-Phase On-Grid</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">1</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-right">65,000</td>
+                            </tr>
+                            <!-- ... other items ... -->
+                        </tbody>
+                    </table>
+
+                    <button class="mt-6 px-6 py-3 bg-green-600 text-white font-extrabold rounded-lg hover:bg-green-700 transition duration-300 shadow-md transform hover:scale-[1.01]" onclick="alertSim('Quote Finalized')">
+                        Finalize & Send Quote
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab 2: Tasks & Milestones (DYNAMICALLY MANAGED) -->
+            <div id="tasks" class="tab-pane hidden">
+                <div class="bg-white p-8 rounded-xl card-shadow border-t-8 border-green-500">
+                    <h2 class="text-2xl font-extrabold mb-6 text-gray-800">Project Task Management (P7901)</h2>
+                    
+                    <!-- Add New Task Form -->
+                    <div class="mb-8 p-4 border border-blue-200 bg-blue-50 rounded-lg">
+                        <h3 class="text-xl font-bold mb-3 text-blue-700">Add New Task</h3>
+                        <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+                            <input type="text" id="new-task-name" placeholder="Enter new task description" class="flex-grow p-2 border rounded-lg focus:border-blue-500">
+                            <select id="new-task-owner" class="p-2 border rounded-lg w-full sm:w-1/3">
+                                <!-- Options populated by JavaScript -->
+                            </select>
+                            <button onclick="window.addTask()" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-300">
+                                Add Task
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Dynamic Task List -->
+                    <h3 class="text-xl font-bold mb-4 text-gray-800">Current Milestones</h3>
+                    <ul id="project-task-list" class="space-y-3">
+                        <li class="p-4 text-center text-gray-500">Loading tasks... Please ensure Firebase is running.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Tab 3: Procurement (Unchanged structure) -->
+            <div id="procurement" class="tab-pane hidden">
+                <div class="bg-white p-8 rounded-xl card-shadow border-t-8 border-red-500">
+                    <h2 class="text-2xl font-extrabold mb-4 text-gray-800">Procurement Request Status</h2>
+                    <p class="mb-6 text-lg text-gray-700">Status: Awaiting Quote Approval. Procurement can be raised once the quote is accepted by the customer.</p>
+                    <button class="px-6 py-3 bg-red-600 text-white font-extrabold rounded-lg hover:bg-red-700 transition duration-300 shadow-md disabled:opacity-50" disabled onclick="alertSim('Procurement Request Raised')">
+                        Raise Procurement Request
+                    </button>
+                    <p class="mt-4 text-sm text-red-700 font-medium">Note: Button is disabled until 'Quote Finalized' status is achieved.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer (Matched to index.html) -->
+    <footer class="bg-gray-800 text-white mt-12">
+        <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 text-center">
+            <p>&copy; 2025 Solarastra EPC. Powered by Assurance.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Rest of the JavaScript outside of the module block
+        
+        // Removed logout function as authentication is bypassed
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabs = document.querySelectorAll('#project-tabs button');
+            
+            // Function to handle tab switching
+            function switchTab(tabName) {
+                // Hide all panes
+                document.querySelectorAll('.tab-pane').forEach(pane => {
+                    pane.classList.add('hidden');
+                });
+                // Deactivate all buttons
+                tabs.forEach(button => {
+                    button.classList.remove('border-yellow-500', 'text-yellow-600');
+                    button.classList.add('border-transparent', 'text-gray-500');
+                });
+
+                // Show the selected pane
+                const activePane = document.getElementById(tabName);
+                if (activePane) {
+                    activePane.classList.remove('hidden');
+                }
+
+                // Activate the selected button
+                const activeButton = document.querySelector(`[data-tab="${tabName}"]`);
+                if (activeButton) {
+                    activeButton.classList.remove('border-transparent', 'text-gray-500');
+                    activeButton.classList.add('border-yellow-500', 'text-yellow-600');
+                }
+            }
+
+            // Set up click listeners
+            tabs.forEach(button => {
+                button.addEventListener('click', () => {
+                    const tabName = button.getAttribute('data-tab');
+                    switchTab(tabName);
+                });
+            });
+
+            // Initialize to the first tab
+            switchTab('quote');
+        });
+
+        // Custom alert function (since alert() is forbidden)
+        function alertSim(message) {
+            const modalHtml = `
+                <div id="sim-modal" class="fixed inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center z-50">
+                    <div class="bg-white p-8 rounded-xl shadow-2xl max-w-sm w-full">
+                        <h3 class="text-xl font-bold text-green-600 mb-4">Action Successful</h3>
+                        <p class="text-gray-700 mb-6">${message}!</p>
+                        <button onclick="document.getElementById('sim-modal').remove()" class="w-full py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">Close</button>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+
+        function showSimulatedAlert(title, message, color) {
+            const colorClass = color === 'red' ? 'bg-red-500' : 'bg-green-500';
+            const titleClass = color === 'red' ? 'text-red-600' : 'text-green-600';
+
+            const modalHtml = `
+                <div id="sim-alert-modal" class="fixed inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center z-50">
+                    <div class="bg-white p-8 rounded-xl shadow-2xl max-w-sm w-full transform transition-all duration-300 scale-100">
+                        <h3 class="text-xl font-extrabold ${titleClass} mb-4">${title}</h3>
+                        <p class="text-gray-700 mb-6">${message}</p>
+                        <button onclick="document.getElementById('sim-alert-modal').remove()" class="w-full py-2 ${colorClass} text-white font-semibold rounded-lg hover:opacity-90">Dismiss</button>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+    </script>
+</body>
+</html>

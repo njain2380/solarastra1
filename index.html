@@ -18,7 +18,6 @@
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background-color: rgba(0, 0, 0, 0.7);
             z-index: 50;
-            display: none;
         }
         .modal-content { max-height: 90vh; overflow-y: auto; }
     </style>
@@ -295,7 +294,7 @@
     </section>
 
     <!-- MODAL 1: Bill Input -->
-    <div id="bill-input-modal" class="modal-backdrop fixed inset-0 flex items-center justify-center">
+    <div id="bill-input-modal" class="modal-backdrop hidden fixed inset-0 flex items-center justify-center">
         <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-lg modal-content" onclick="event.stopPropagation()">
             <h3 class="text-2xl font-extrabold text-gray-800 mb-6">Enter Last 3 Months' Bills</h3>
             <form id="multi-bill-form">
@@ -320,7 +319,7 @@
     </div>
 
     <!-- MODAL 2: Report Output (Full Screen) -->
-    <div id="report-modal" class="modal-backdrop fixed inset-0 flex items-center justify-center">
+    <div id="report-modal" class="modal-backdrop hidden fixed inset-0 flex items-center justify-center">
         <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-4xl modal-content" onclick="event.stopPropagation()">
             
             <div class="flex justify-between items-center border-b pb-4 mb-6">
@@ -369,10 +368,12 @@
 
         // --- MODAL UTILITY FUNCTIONS ---
         function openModal(id) {
-            document.getElementById(id).style.display = 'flex';
+            document.getElementById(id).classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; // Prevent scrolling behind modal
         }
         window.closeModal = (id) => {
-            document.getElementById(id).style.display = 'none';
+            document.getElementById(id).classList.add('hidden');
+            document.body.style.overflow = 'auto';
         }
         window.openBillModal = () => {
             openModal('bill-input-modal');

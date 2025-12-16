@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solarastra - Solar Savings Calculator | Go Green, Save Big</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f7fafc; }
+        .hero-bg { background-image: linear-gradient(135deg, #059669 0%, #10b981 100%); } /* Darker to Lighter Green */
+        .card-shadow { box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        /* Style for guided steps */
+        .step-active { display: block; }
+        .step-hidden { display: none; }
+    </style>
+</head>
+<body>
+    <!-- Global API Key and Configuration -->
+    <script>
+        const API_KEY = ""; // Gemini API Key
+        const MODEL_NAME = "gemini-2.5-flash-preview-09-2025";
+    </script>
+
+    <!-- Navigation Header -->
+    <header class="bg-white shadow-lg sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <!-- Logo -->
+                <a href="index.html" class="flex items-center space-x-2">
+                    <!-- Updated to use the uploaded logo-orange.jpg -->
+                    <img src="logo-orange.jpg" onerror="this.onerror=null;this.src='https://placehold.co/40x40/f97316/ffffff?text=SA';" alt="Solarastra Logo" class="h-10 w-auto rounded-full shadow-md">
+                    <span class="text-2xl font-extrabold text-gray-800">Solarastra</span>
+                </a>
+                <!-- Nav Links -->
+                <nav class="hidden md:flex space-x-8 items-center">
+                    <a href="index.html" class="text-green-600 font-bold hover:text-green-800 transition duration-300">Calculator</a>
+                    <a href="warranty.html" class="text-gray-600 hover:text-green-600 transition duration-300">Assurance & Warranty</a>
+                    <a href="faq.html" class="text-gray-600 hover:text-green-600 transition duration-300">FAQ</a>
+                    <a href="epc-login.html" class="px-6 py-2 bg-yellow-500 text-white font-semibold rounded-full shadow-lg hover:bg-yellow-600 transition duration-300 transform hover:scale-105">EPC Portal</a>
+                </nav>
+                <!-- Mobile Menu Button (Placeholder for functionality) -->
+                <button id="mobile-menu-btn" class="md:hidden text-gray-600 hover:text-green-600 focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-bg text-white py-20 sm:py-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-5xl sm:text-6xl font-extrabold mb-4 leading-tight">
+                Go Green, Save Big. <span class="text-yellow-300">Switch to Solarastra.</span>
+            </h1>
+            <p class="text-xl sm:text-2xl font-light mb-8 max-w-3xl mx-auto">
+                India's One-Stop Solution for Rooftop Solar: From Calculation to Commissioning.
+            </p>
+            <a href="#calculator-section" class="px-8 py-3 bg-yellow-500 text-gray-900 font-extrabold rounded-full shadow-xl hover:bg-yellow-400 transition duration-300 transform hover:scale-105 inline-block text-lg">
+                Calculate My Savings Now ↓
+            </a>
+        </div>
+    </section>
+
+    <!-- Feature Section (Trust Factors) - Enhanced Messaging -->
+    <section class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <h2 class="text-4xl font-extrabold text-center text-gray-800 mb-10">Why Choose Solarastra? Guaranteed Assurance.</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Feature 1: One-Stop-Shop -->
+            <div class="bg-white p-6 rounded-xl shadow-lg border-t-4 border-green-500 text-center transform hover:scale-[1.03] transition duration-300">
+                <div class="text-green-500 mb-3 mx-auto">
+                    <svg class="w-10 h-10 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m0 0l-1 4h11l1-4h-2m0 0a2 2 0 100-4a2 2 0 000 4zM12 9V5"></path></svg>
+                </div>
+                <h3 class="text-xl font-extrabold mb-2 text-gray-800">1-Stop-Shop Convenience</h3>
+                <p class="text-gray-600 text-sm">We handle everything: site assessment, permitting, financing, installation, and **all subsidy documentation**—no more running behind multiple parties!</p>
+            </div>
+            <!-- Feature 2: Financial Clarity -->
+            <div class="bg-white p-6 rounded-xl shadow-lg border-t-4 border-yellow-500 text-center transform hover:scale-[1.03] transition duration-300">
+                <div class="text-yellow-500 mb-3 mx-auto">
+                    <svg class="w-10 h-10 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 8h6m-5 0h.01M9 12h6m-5 0h.01M9 16h6m-5 0h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <h3 class="text-xl font-extrabold mb-2 text-gray-800">EMI-Conversion Finance</h3>
+                <p class="text-gray-600 text-sm">Our financial calculators include **Central & State Subsidies**. Convert your electricity bill into a manageable EMI, securing your asset.</p>
+            </div>
+            <!-- Feature 3: Warranty Assurance (Updated) -->
+            <div class="bg-white p-6 rounded-xl shadow-lg border-t-4 border-green-500 text-center transform hover:scale-[1.03] transition duration-300">
+                <div class="text-green-500 mb-3 mx-auto">
+                    <svg class="w-10 h-10 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.001 12.001 0 002.944 12c-.113.684-.113 1.378 0 2.062a12.001 12.001 0 003.438 6.944A11.955 11.955 0 0112 21.056a11.955 11.955 0 018.618-3.04A12.001 12.001 0 0021.056 12c.113-.684.113-1.378 0-2.062a12.001 12.001 0 00-3.438-6.944z"></path></svg>
+                </div>
+                <h3 class="text-xl font-extrabold mb-2 text-gray-800">Certified Installers & Warranties</h3>
+                <p class="text-gray-600 text-sm">We use **only certified installers** and ensure they provide material and workmanship warranties—guaranteed peace of mind.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content - Calculator and Report -->
+    <main class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8" id="calculator-section">
+        <div class="lg:flex lg:space-x-12">
+            
+            <!-- Calculator Input Card (Left Side) - Guided Steps -->
+            <div class="lg:w-1/3 mb-10 lg:mb-0 bg-white p-8 rounded-xl card-shadow border-t-8 border-yellow-500">
+                <h2 class="text-3xl font-extrabold text-gray-800 mb-6 text-center" id="calculator-title">Step 1: Get Started</h2>
+                <form id="solar-calculator-form">
+                    
+                    <!-- Step 1: Location and Bill -->
+                    <div id="step-1" class="step-active">
+                        <!-- Location Input -->
+                        <div class="mb-4">
+                            <label for="location" class="block text-sm font-bold text-gray-700">1. Your Location (For Subsidy & Radiation):</label>
+                            <select id="location" required class="mt-1 block w-full rounded-lg border border-gray-300 p-3 shadow-sm focus:border-green-500 focus:ring-green-500">
+                                <option value="">Select City / State in India</option>
+                                <option value="Delhi">Delhi / NCR</option>
+                                <option value="Mumbai">Mumbai / Maharashtra</option>
+                                <option value="Bengaluru">Bengaluru / Karnataka</option>
+                                <option value="Chennai">Chennai / Tamil Nadu</option>
+                                <option value="Jaipur">Jaipur / Rajasthan</option>
+                                <option value="Kolkata">Kolkata / West Bengal</option>
+                                <option value="Hyderabad">Hyderabad / Telangana</option>
+                            </select>
+                        </div>
+
+                        <!-- Monthly Bill Input -->
+                        <div class="mb-6">
+                            <label for="monthly-bill" class="block text-sm font-bold text-gray-700">2. Average Monthly Electricity Bill (₹ INR):</label>
+                            <input type="number" id="monthly-bill" required min="1000" step="100" placeholder="e.g., 5000" class="mt-1 block w-full rounded-lg border border-gray-300 p-3 shadow-sm focus:border-green-500 focus:ring-green-500">
+                            <p class="text-xs text-gray-500 mt-1">Used to determine required system size.</p>
+                        </div>
+                        
+                        <button type="button" onclick="nextStep(2)" class="w-full py-3 bg-yellow-500 text-gray-900 font-extrabold rounded-lg hover:bg-yellow-600 transition duration-300 shadow-lg">
+                            Next: Financial Options
+                        </button>
+                    </div>
+
+                    <!-- Step 2: Loan Option -->
+                    <div id="step-2" class="step-hidden">
+                        <h3 class="text-xl font-bold mb-4 text-center text-green-700">3. Do you require a loan for the balance amount (post-subsidy)?</h3>
+                        
+                        <div class="space-y-4">
+                            <button type="button" onclick="handleLoanOption(true)" class="w-full py-3 bg-green-500 text-white font-extrabold rounded-lg hover:bg-green-600 transition duration-300 shadow-md">
+                                Yes, I need financing
+                            </button>
+                            <button type="button" onclick="handleLoanOption(false)" class="w-full py-3 bg-gray-500 text-white font-extrabold rounded-lg hover:bg-gray-600 transition duration-300 shadow-md">
+                                No, I will pay full amount (100% Down)
+                            </button>
+                        </div>
+                        <button type="button" onclick="prevStep(1)" class="w-full py-2 mt-4 text-sm text-gray-500 hover:text-gray-700">
+                            ← Back
+                        </button>
+                    </div>
+
+                    <!-- Step 3: Down Payment (Shown only if loan is chosen) -->
+                    <div id="step-3" class="step-hidden">
+                         <h3 class="text-xl font-bold mb-4 text-center text-green-700">4. Choose Your Down Payment</h3>
+
+                        <!-- Down Payment Input -->
+                        <div class="mb-6">
+                            <label for="down-payment-percent" class="block text-sm font-bold text-gray-700">Down Payment Percentage (%):</label>
+                            <input type="range" id="down-payment-percent" min="0" max="99" value="20" oninput="this.nextElementSibling.value=this.value+'%'" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-lg">
+                            <output class="block text-center mt-2 font-extrabold text-green-600 text-xl">20%</output>
+                            <p class="text-xs text-gray-500 mt-1 text-center">Remaining amount will be financed as EMI.</p>
+                        </div>
+                        
+                        <button type="submit" class="w-full py-3 bg-green-600 text-white font-extrabold rounded-lg hover:bg-green-700 transition duration-300 shadow-xl transform hover:scale-[1.02]">
+                            Generate Personalized Report
+                        </button>
+                        <button type="button" onclick="prevStep(2)" class="w-full py-2 mt-4 text-sm text-gray-500 hover:text-gray-700">
+                            ← Back
+                        </button>
+                    </div>
+                </form>
+
+                <div id="loading-indicator" class="hidden mt-6 text-center">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-4 border-green-500 mx-auto"></div>
+                    <p class="mt-2 text-sm font-medium text-gray-600">Calculating optimal system size and factoring in **Subsidies**...</p>
+                </div>
+
+            </div>
+
+            <!-- Results/Report Section (Right Side) -->
+            <div class="lg:w-2/3 bg-white p-8 rounded-xl card-shadow border-t-8 border-green-500">
+                <h2 class="text-3xl font-extrabold text-gray-800 mb-6">Your Solar Potential Report</h2>
+                <div id="report-output" class="hidden">
+                    
+                    <!-- Simplified High-Level Summary -->
+                    <h3 class="text-2xl font-bold text-gray-700 mb-4 border-b pb-2 text-yellow-600">Your Simple Financial Snapshot</h3>
+                    
+                    <div class="space-y-4 text-gray-700 text-lg mb-8">
+                        <p><strong>Your Current Monthly Electricity Bill:</strong> <span class="font-extrabold text-red-600 text-2xl" id="current-bill-display">₹ 0</span></p>
+                        <p><strong>Your Estimated Monthly Solar EMI:</strong> <span class="font-extrabold text-green-600 text-2xl" id="finance-emi-main">₹ 0</span></p>
+                        <p><strong>Est. Monthly Savings (Energy):</strong> <span class="font-extrabold text-yellow-600 text-xl" id="stat-monthly-savings">₹ 0</span></p>
+                        <p><strong>Est. Payback Period:</strong> <span class="font-extrabold text-green-600 text-xl" id="stat-payback">0 Yrs</span></p>
+                    </div>
+
+                    <!-- Core Value Proposition -->
+                    <div class="p-6 bg-blue-50 border-l-4 border-blue-500 rounded-lg mb-8">
+                        <p class="font-extrabold text-blue-800 text-xl">The Solarastra Zero-Bill Advantage:</p>
+                        <p class="text-base mt-2">
+                            You currently pay <span id="bill-comparison" class="font-extrabold text-red-700">₹ 0</span> to the utility. Instead, you could pay an investment EMI of <span id="emi-comparison" class="font-extrabold text-blue-700">₹ 0</span> for a few years.
+                            <br><br>
+                            **Once the EMI stops, your energy is essentially FREE for the next 20+ years.**
+                        </p>
+                    </div>
+
+                    <!-- Toggle Button for Advanced Details -->
+                    <button id="toggle-advanced-btn" onclick="toggleAdvancedDetails()" class="w-full py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition duration-300">
+                        Show Advanced Financial Details
+                    </button>
+                    
+                    <!-- Advanced Financial Details (Initially Hidden) -->
+                    <div id="advanced-financial-details" class="hidden mt-6 pt-4 border-t border-gray-200">
+                        <h3 class="text-xl font-bold text-gray-700 mb-4 text-green-600">Detailed Investment Breakdown</h3>
+                        <div class="space-y-3 text-gray-700 text-base">
+                            <p><strong>1. Total Project Cost (Pre-Subsidy):</strong> <span class="font-extrabold text-gray-800" id="finance-cost-pre">₹ 0</span></p>
+                            <p><strong>2. Total Subsidy Received (Central & State):</strong> <span class="font-extrabold text-green-600" id="finance-subsidy">₹ 0</span></p>
+                            <p><strong>3. Net Project Cost (Post-Subsidy):</strong> <span class="font-extrabold text-gray-800" id="finance-cost">₹ 0</span></p>
+                            <p><strong>4. Your Down Payment:</strong> <span class="font-extrabold text-yellow-600" id="finance-down-payment">₹ 0</span></p>
+                            <p><strong>5. Loan Amount Required:</strong> <span class="font-extrabold text-red-600" id="finance-loan">₹ 0</span></p>
+                            <p><strong>Est. System Size:</strong> <span class="font-extrabold text-gray-800" id="stat-system-size">0 kWp</span></p>
+                        </div>
+                    </div>
+                    <!-- End Advanced Details -->
+                    
+                    <h3 class="text-2xl font-bold text-gray-700 mt-8 mb-4 border-b pb-2 text-green-600">Detailed Report Summary (Powered by AI)</h3>
+                    
+                    <!-- Gemini Generated Report will be placed here -->
+                    <div id="gemini-report" class="bg-gray-100 p-6 rounded-lg text-gray-800 text-base italic leading-relaxed border border-gray-300">
+                        The AI-powered summary will appear here, explaining your savings and investment in simple terms.
+                    </div>
+                    
+                    <div class="mt-8 text-center">
+                        <button class="px-8 py-3 bg-yellow-500 text-gray-900 font-extrabold rounded-full shadow-lg hover:bg-yellow-600 transition duration-300">
+                            Get a Free Site Assessment
+                        </button>
+                    </div>
+                </div>
+
+                <div id="initial-message" class="text-center p-10 text-gray-500">
+                    <p class="text-2xl font-light">Enter your details on the left to unlock your personalized Solarastra Solar Report.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- EMI Offset Visualization Section (Simulated Video) -->
+    <section class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <div class="bg-green-100 p-8 rounded-xl shadow-2xl flex flex-col lg:flex-row items-center lg:space-x-8">
+            <div class="lg:w-1/2 mb-6 lg:mb-0">
+                <h2 class="text-3xl font-extrabold text-green-800 mb-4">See How Your EMI Becomes FREE Energy</h2>
+                <p class="text-gray-700 mb-4 text-lg">
+                    Watch this short video explaining the magic of solar finance. Your monthly electricity bill is an expense, but your solar EMI is an investment that stops after a few years—leaving you with **free electricity for life**!
+                </p>
+                <p class="text-sm text-green-600 font-semibold">
+                    *The video shows a comparison where EMI payments stop after 5 years, but your savings continue for the next 20+ years.*
+                </p>
+            </div>
+            <div class="lg:w-1/2 w-full aspect-video bg-gray-700 rounded-lg flex items-center justify-center text-white text-xl font-bold">
+                <!-- Placeholder for Video Embed -->
+                [VIDEO PLACEHOLDER: EMI Offset Simulation]
+            </div>
+        </div>
+    </section>
+
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white mt-12">
+        <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 text-center">
+            <p>&copy; 2025 Solarastra. All rights reserved. Workmanship & Material Warranties Assured.</p>
+        </div>
+    </footer>
+
+    <script>
+        // State variables for the guided form
+        let currentStep = 1;
+        let isLoanRequired = true; 
+        
+        // --- SOLAR AND SUBSIDY DATA ---
+        // Central Subsidy Rate (Simulated flat rate for easy calculation based on average)
+        const centralSubsidyRate = 14000; // INR per kWp (approx. blended average for residential)
+
+        const solarFactors = {
+            // srf = Solar Resource Factor, unitPrice = Avg Unit Price (INR/kWh), stateSubsidy = INR/kWp
+            "Delhi": { srf: 4.5, unitPrice: 8, stateSubsidy: 5000 }, 
+            "Mumbai": { srf: 4.0, unitPrice: 10, stateSubsidy: 0 }, 
+            "Bengaluru": { srf: 4.8, unitPrice: 7, stateSubsidy: 4000 },
+            "Chennai": { srf: 5.0, unitPrice: 6, stateSubsidy: 3000 },
+            "Jaipur": { srf: 5.5, unitPrice: 9, stateSubsidy: 6000 },
+            "Kolkata": { srf: 3.8, unitPrice: 8, stateSubsidy: 0 },
+            "Hyderabad": { srf: 4.7, unitPrice: 7.5, stateSubsidy: 3500 },
+        };
+        // --- END SOLAR AND SUBSIDY DATA ---
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('solar-calculator-form');
+            const locationSelect = document.getElementById('location');
+            const monthlyBillInput = document.getElementById('monthly-bill');
+            const downPaymentRange = document.getElementById('down-payment-percent');
+            const outputPercent = document.querySelector('output');
+            const reportOutput = document.getElementById('report-output');
+            const initialMessage = document.getElementById('initial-message');
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const geminiReport = document.getElementById('gemini-report');
+            const calculatorTitle = document.getElementById('calculator-title');
+
+            const steps = {
+                1: document.getElementById('step-1'),
+                2: document.getElementById('step-2'),
+                3: document.getElementById('step-3')
+            };
+            
+            // --- Guided Form Navigation Functions ---
+            window.nextStep = (step) => {
+                if (step === 2) {
+                    // Validation for Step 1
+                    if (!locationSelect.value || parseFloat(monthlyBillInput.value) < 1000) {
+                        showSimulatedAlert("Validation Error", "Please select a valid location and enter a bill amount of at least ₹1000.", "red");
+                        return;
+                    }
+                }
+                
+                steps[currentStep].classList.replace('step-active', 'step-hidden');
+                currentStep = step;
+                steps[currentStep].classList.replace('step-hidden', 'step-active');
+                calculatorTitle.textContent = `Step ${currentStep}: ${currentStep === 2 ? 'Financing?' : 'Choose Down Payment'}`;
+                
+                // Reset report view
+                reportOutput.classList.add('hidden');
+                initialMessage.classList.remove('hidden');
+            };
+
+            window.prevStep = (step) => {
+                steps[currentStep].classList.replace('step-active', 'step-hidden');
+                currentStep = step;
+                steps[currentStep].classList.replace('step-hidden', 'step-active');
+                calculatorTitle.textContent = `Step ${currentStep}: ${currentStep === 1 ? 'Get Started' : 'Financing?'}`;
+            };
+            
+            window.handleLoanOption = (needsLoan) => {
+                isLoanRequired = needsLoan;
+                if (isLoanRequired) {
+                    nextStep(3); // Go to down payment selection
+                } else {
+                    // If no loan, process immediately with 100% down
+                    form.dispatchEvent(new Event('submit'));
+                }
+            };
+            
+            // Function to toggle advanced financial details visibility
+            window.toggleAdvancedDetails = () => {
+                const advancedDiv = document.getElementById('advanced-financial-details');
+                const toggleBtn = document.getElementById('toggle-advanced-btn');
+                
+                if (advancedDiv.classList.contains('hidden')) {
+                    advancedDiv.classList.remove('hidden');
+                    toggleBtn.textContent = 'Hide Advanced Financial Details';
+                } else {
+                    advancedDiv.classList.add('hidden');
+                    toggleBtn.textContent = 'Show Advanced Financial Details';
+                }
+            };
+            // --- End Guided Form Navigation Functions ---
+            
+            
+            // Function to handle exponential backoff for API calls
+            const fetchWithRetry = async (url, options, maxRetries = 5) => {
+                let delay = 1000;
+                for (let i = 0; i < maxRetries; i++) {
+                    try {
+                        const response = await fetch(url, options);
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                        return response;
+                    } catch (error) {
+                        if (i === maxRetries - 1) throw error;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        delay *= 2;
+                    }
+                }
+            };
+
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                steps[currentStep].classList.replace('step-active', 'step-hidden');
+                loadingIndicator.classList.remove('hidden');
+                initialMessage.classList.add('hidden');
+                reportOutput.classList.add('hidden');
+                calculatorTitle.textContent = "Processing...";
+
+
+                const location = locationSelect.value;
+                const monthlyBill = parseFloat(monthlyBillInput.value);
+                // Down payment is 100% if no loan is chosen (isLoanRequired = false)
+                const downPaymentPercent = isLoanRequired ? (parseFloat(downPaymentRange.value) / 100) : 1.0;
+                
+                const factor = solarFactors[location];
+
+                // 1. Calculate Estimated System Size (kW)
+                const dailyConsumption = monthlyBill / factor.unitPrice / 30;
+                const systemSize = (dailyConsumption / factor.srf / 0.8).toFixed(2); 
+                
+                // 2. Calculate Savings and Costs
+                const estMonthlyGeneration = parseFloat(systemSize) * factor.srf * 30 * 0.8; 
+                const monthlySavings = (estMonthlyGeneration * factor.unitPrice).toFixed(0);
+                
+                // Est. Project Cost (INR) - Avg cost of 60,000 INR/kWp
+                const projectCostPreSubsidy = parseFloat(systemSize) * 60000;
+                
+                // 3. Calculate Subsidy
+                const totalSubsidy = (parseFloat(systemSize) * (centralSubsidyRate + factor.stateSubsidy));
+                
+                // 4. Calculate Net Cost after Subsidy
+                const netProjectCost = Math.max(0, projectCostPreSubsidy - totalSubsidy); 
+                const paybackPeriod = (netProjectCost / (monthlySavings * 12)).toFixed(1);
+
+
+                // 5. Financials
+                const downPaymentAmount = netProjectCost * downPaymentPercent;
+                const loanAmount = Math.max(0, netProjectCost - downPaymentAmount); // Loan only needed if down payment is less than 100%
+                
+                // Simplified EMI (Using 5-year tenure (60 months) and flat 10% annual interest rate)
+                const monthlyInterestRate = 0.10 / 12;
+                const numPayments = 60;
+                const emi = loanAmount > 0 
+                    ? (loanAmount * monthlyInterestRate) / (1 - Math.pow(1 + monthlyInterestRate, -numPayments))
+                    : 0;
+                    
+                // 6. Update UI Stats
+                // Simple View Elements
+                document.getElementById('current-bill-display').textContent = `₹ ${monthlyBill.toLocaleString('en-IN')}`;
+                document.getElementById('finance-emi-main').textContent = `₹ ${emi.toFixed(0).toLocaleString('en-IN')}`;
+                document.getElementById('stat-monthly-savings').textContent = `₹ ${monthlySavings.toLocaleString('en-IN')}`;
+                document.getElementById('stat-payback').textContent = `${paybackPeriod} Yrs`;
+                
+                // Core Comparison Box
+                document.getElementById('emi-comparison').textContent = `₹ ${emi.toFixed(0).toLocaleString('en-IN')}`;
+                document.getElementById('bill-comparison').textContent = `₹ ${monthlyBill.toLocaleString('en-IN')}`;
+
+
+                // Advanced View Elements
+                document.getElementById('stat-system-size').textContent = `${systemSize} kWp`;
+                document.getElementById('finance-cost-pre').textContent = `₹ ${projectCostPreSubsidy.toLocaleString('en-IN')}`;
+                document.getElementById('finance-subsidy').textContent = `₹ ${totalSubsidy.toLocaleString('en-IN')}`;
+                document.getElementById('finance-cost').textContent = `₹ ${netProjectCost.toLocaleString('en-IN')}`;
+                document.getElementById('finance-down-payment').textContent = `₹ ${downPaymentAmount.toLocaleString('en-IN')}`;
+                document.getElementById('finance-loan').textContent = `₹ ${loanAmount.toLocaleString('en-IN')}`;
+
+                
+                // 7. Generate AI Report Summary using Gemini
+                await generateReport(location, monthlyBill, systemSize, monthlySavings, emi.toFixed(0), totalSubsidy.toLocaleString('en-IN'));
+
+                loadingIndicator.classList.add('hidden');
+                reportOutput.classList.remove('hidden');
+                calculatorTitle.textContent = "Report Generated";
+                currentStep = 1; // Reset to step 1 for new calculation
+                steps[1].classList.replace('step-hidden', 'step-active');
+            });
+
+            async function generateReport(location, bill, size, savings, emi, subsidy) {
+                geminiReport.innerHTML = '<p class="text-center">Generating layman\'s report summary...</p>';
+
+                const systemInstruction = "You are a friendly, unbiased financial consultant for Solarastra. Your task is to provide a concise, single-paragraph summary explaining the solar investment opportunity in simple, layman's terms. Focus on the subsidy amount, how the monthly electricity bill (₹" + bill + ") is converted into an asset (EMI of ₹" + emi + "), and the long-term benefit (free power after payback). Highlight the major numbers clearly.";
+                
+                const userQuery = `Generate the financial proposal summary for this data: Location: ${location}, Estimated system size: ${size} kWp, Estimated monthly savings: ₹${savings}, Total Subsidy: ₹${subsidy}.`;
+
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${API_KEY}`;
+                
+                const payload = {
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    tools: [{ "google_search": {} }],
+                    systemInstruction: { parts: [{ text: systemInstruction }] },
+                };
+
+                try {
+                    const response = await fetchWithRetry(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    const result = await response.json();
+                    const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "Could not generate report. The API service might be unavailable. Please check back later.";
+                    
+                    geminiReport.innerHTML = `<p>${text}</p>`;
+
+                } catch (error) {
+                    console.error("Gemini API Error:", error);
+                    geminiReport.innerHTML = `<p class="text-red-500">Error generating the detailed report. API request failed. Check console for details.</p>`;
+                }
+            }
+
+            // Custom alert function (since alert() is forbidden)
+            function showSimulatedAlert(title, message, color) {
+                const colorClass = color === 'red' ? 'bg-red-500' : 'bg-green-500';
+                const titleClass = color === 'red' ? 'text-red-600' : 'text-green-600';
+
+                const modalHtml = `
+                    <div id="sim-alert-modal" class="fixed inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center z-50">
+                        <div class="bg-white p-8 rounded-xl shadow-2xl max-w-sm w-full transform transition-all duration-300 scale-100">
+                            <h3 class="text-xl font-extrabold ${titleClass} mb-4">${title}</h3>
+                            <p class="text-gray-700 mb-6">${message}</p>
+                            <button onclick="document.getElementById('sim-alert-modal').remove()" class="w-full py-2 ${colorClass} text-white font-semibold rounded-lg hover:opacity-90">Dismiss</button>
+                        </div>
+                    </div>
+                `;
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+            }
+        });
+    </script>
+</body>
+</html>

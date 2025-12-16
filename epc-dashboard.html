@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EPC Dashboard - Solarastra</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f7fafc; }
+        .stat-card { transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.15); }
+        .card-shadow { box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .progress-bar { height: 10px; border-radius: 9999px; }
+        .progress-label { font-size: 0.75rem; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <!-- Navigation Header (Matched to index.html EPC style) -->
+    <header class="bg-gray-800 shadow-lg sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <a href="epc-dashboard.html" class="flex items-center space-x-2">
+                    <img src="logo-orange.jpg" onerror="this.onerror=null;this.src='https://placehold.co/40x40/f97316/ffffff?text=SA';" alt="Solarastra Logo" class="h-10 w-auto rounded-full shadow-md">
+                    <span class="text-2xl font-extrabold text-white">Solarastra EPC</span>
+                </a>
+                <nav class="flex space-x-6 items-center">
+                    <a href="epc-dashboard.html" class="text-yellow-400 font-bold hover:text-yellow-300 transition duration-300">Dashboard</a>
+                    <a href="epc-project-details.html" class="text-gray-300 hover:text-yellow-400 transition duration-300">Quoting / BOM</a>
+                    <button onclick="logout()" class="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 transition duration-300">Logout</button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content - Dashboard -->
+    <main class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <h1 class="text-4xl font-extrabold text-gray-900 mb-8 border-b pb-4">Project Management Dashboard</h1>
+        
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
+            <div class="stat-card bg-white p-6 rounded-xl card-shadow border-l-8 border-green-500">
+                <p class="text-sm font-medium text-gray-500">New Leads</p>
+                <p class="text-4xl font-extrabold text-green-600">12</p>
+            </div>
+            <div class="stat-card bg-white p-6 rounded-xl card-shadow border-l-8 border-yellow-500">
+                <p class="text-sm font-medium text-gray-500">Projects In Progress</p>
+                <p class="text-4xl font-extrabold text-yellow-600">24</p>
+            </div>
+            <div class="stat-card bg-white p-6 rounded-xl card-shadow border-l-8 border-blue-500">
+                <p class="text-sm font-medium text-gray-500">Procurement Pending</p>
+                <p class="text-4xl font-extrabold text-blue-600">8</p>
+            </div>
+            <div class="stat-card bg-white p-6 rounded-xl card-shadow border-l-8 border-red-500">
+                <p class="text-sm font-medium text-gray-500">Overdue Tasks</p>
+                <p class="text-4xl font-extrabold text-red-600" id="overdue-count">3</p>
+            </div>
+        </div>
+
+        <!-- Project Progress Summary and Overdue Tasks -->
+        <div class="lg:flex lg:space-x-8 mb-10">
+            
+            <!-- Project Stage Progress Summary -->
+            <div class="lg:w-2/3">
+                <h2 class="text-2xl font-extrabold text-gray-800 mb-4">Project Progress Summary (By Stage)</h2>
+                <div class="bg-white p-6 rounded-xl shadow-md card-shadow space-y-4">
+                    
+                    <!-- Progress Bar 1: Lead Qualification (12 leads) -->
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="progress-label text-green-700">Lead Qualification (12)</span>
+                            <span class="progress-label">25%</span>
+                        </div>
+                        <div class="progress-bar bg-gray-200">
+                            <div class="progress-bar bg-green-500" style="width: 25%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar 2: Quoting & Proposal (10 projects) -->
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="progress-label text-yellow-700">Quoting & Proposal (10)</span>
+                            <span class="progress-label">40%</span>
+                        </div>
+                        <div class="progress-bar bg-gray-200">
+                            <div class="progress-bar bg-yellow-500" style="width: 40%;"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Bar 3: Installation & Commissioning (8 projects) -->
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="progress-label text-blue-700">Installation & Commissioning (8)</span>
+                            <span class="progress-label">20%</span>
+                        </div>
+                        <div class="progress-bar bg-gray-200">
+                            <div class="progress-bar bg-blue-500" style="width: 20%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar 4: Completed Projects (4 projects) -->
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="progress-label text-gray-700">Completed Projects (4)</span>
+                            <span class="progress-label">15%</span>
+                        </div>
+                        <div class="progress-bar bg-gray-200">
+                            <div class="progress-bar bg-gray-500" style="width: 15%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overdue Tasks (Notifications) -->
+            <div class="lg:w-1/3 mt-8 lg:mt-0">
+                <h2 class="text-2xl font-extrabold text-gray-800 mb-4 flex justify-between items-center">
+                    Overdue Tasks 
+                    <span class="text-base text-red-600 font-bold" id="overdue-summary">(3 Critical)</span>
+                </h2>
+                <div class="bg-white p-4 rounded-xl shadow-md space-y-3 card-shadow">
+                    
+                    <div class="border-l-4 border-red-500 p-3 bg-red-50 text-sm text-gray-800 rounded">
+                        <span class="font-bold text-red-700">P7893 (Sharma):</span> Raise Procurement Request. <span class="text-xs italic float-right">1 day overdue</span>
+                    </div>
+                    <div class="border-l-4 border-red-500 p-3 bg-red-50 text-sm text-gray-800 rounded">
+                        <span class="font-bold text-red-700">P7755 (Patel):</span> Final Inspection Report. <span class="text-xs italic float-right">3 days overdue</span>
+                    </div>
+                    <div class="border-l-4 border-red-500 p-3 bg-red-50 text-sm text-gray-800 rounded">
+                        <span class="font-bold text-red-700">P7901 (Singh):</span> Site Visit Upload. <span class="text-xs italic float-right">Overdue 5 hours</span>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Project List -->
+        <h2 class="text-2xl font-extrabold text-gray-800 mb-4">Active Projects (24)</h2>
+        <div id="project-list" class="space-y-4">
+            <!-- Example Project Card 1 (In Progress) -->
+            <div class="bg-white p-4 rounded-xl shadow-md border-l-4 border-yellow-500 flex justify-between items-center transform hover:bg-gray-50 transition duration-200">
+                <div>
+                    <p class="text-lg font-semibold text-gray-800">Customer: Ritesh Sharma <span class="text-sm text-gray-500 ml-2">(ID: P7893)</span></p>
+                    <p class="text-sm text-gray-600">Location: Bengaluru | Size: 5kWp</p>
+                    <p class="text-xs text-yellow-600 font-bold mt-1">Status: Installation Scheduled</p>
+                </div>
+                <a href="epc-project-details.html?id=P7893" class="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition duration-300">View Details</a>
+            </div>
+            <!-- Example Project Card 2 (New Lead) -->
+            <div class="bg-white p-4 rounded-xl shadow-md border-l-4 border-green-500 flex justify-between items-center transform hover:bg-gray-50 transition duration-200">
+                <div>
+                    <p class="text-lg font-semibold text-gray-800">Customer: Priya Singh <span class="text-sm text-gray-500 ml-2">(ID: P7901)</span></p>
+                    <p class="text-sm text-gray-600">Location: Delhi | Size: 8kWp (New Lead)</p>
+                    <p class="text-xs text-green-600 font-bold mt-1">Status: Quote Generation Required</p>
+                </div>
+                <a href="epc-project-details.html?id=P7901" class="px-4 py-2 bg-yellow-500 text-gray-900 text-sm rounded-lg hover:bg-yellow-600 transition duration-300 font-semibold">Start Quoting</a>
+            </div>
+            <!-- Add more project cards here... -->
+        </div>
+    </main>
+    
+    <!-- Footer (Matched to index.html) -->
+    <footer class="bg-gray-800 text-white mt-12">
+        <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 text-center">
+            <p>&copy; 2025 Solarastra EPC. Powered by Assurance.</p>
+        </div>
+    </footer>
+
+    <script>
+        function logout() {
+            // Simulated logout
+            if (window.confirm("Are you sure you want to log out of the EPC Portal?")) {
+                window.location.href = 'epc-login.html';
+            }
+        }
+    </script>
+</body>
+</html>

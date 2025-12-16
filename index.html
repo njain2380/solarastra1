@@ -618,7 +618,7 @@
                     : 0;
                     
                 // 6. Generate AI Report Summary using Gemini
-                const geminiText = await generateReport(location, monthlyBill, systemSize, monthlySavings, emi.toFixed(0), totalSubsidy.toLocaleString('en-IN'));
+                const geminiText = await generateReport(location, monthlyBill, systemSize, monthlySavings, emi.toFixed(0), totalSubsidy.toLocaleString('en-IN'), paybackPeriod);
 
                 // 7. Prepare data for modal
                 const reportData = {
@@ -646,8 +646,18 @@
                 steps[1].classList.replace('step-hidden', 'step-active');
             });
 
-            async function generateReport(location, bill, size, savings, emi, subsidy) {
-                const systemInstruction = "You are a friendly, unbiased financial consultant for Solarastra. Your task is to provide a concise, single-paragraph summary explaining the solar investment opportunity in simple, layman's terms. Focus on the subsidy amount, how the monthly electricity bill (₹" + bill + ") is converted into an asset (EMI of ₹" + emi + "), and the long-term benefit (free power after payback). Highlight the major numbers clearly.";
+            async function generateReport(location, bill, size, savings, emi, subsidy, paybackPeriod) {
+                
+                const clientFallbackText = `Based on your chosen location (${location}) and an average monthly bill of ₹${bill.toLocaleString('en-IN')}, our analysis projects an estimated system size of ${size} kWp. After factoring in a total subsidy of ₹${subsidy}, your net investment results in an estimated monthly EMI of ₹${emi}. This EMI is offset by the estimated monthly savings of ₹${savings} and allows you to transition from paying an electricity expense to owning an asset. You are projected to reach the payback point in approximately ${paybackPeriod} years, after which your electricity becomes essentially free for the lifespan of the system. This provides superior long-term financial security compared to continuous utility payments.`;
+
+
+                if (API_KEY === "") {
+                    console.warn("API Key is missing. Returning client-side generated report summary.");
+                    return clientFallbackText;
+                }
+                
+                // If API Key exists, attempt Gemini call
+                const systemInstruction = "You are a friendly, unbiased financial consultant for Solarastra. Your task is to provide a concise, single-paragraph summary explaining the solar investment opportunity in simple, layman's terms. Focus on the subsidy amount, how the monthly electricity bill (₹" + bill.toLocaleString('en-IN') + ") is converted into an asset (EMI of ₹" + emi + "), and the long-term benefit (free power after payback). Highlight the major numbers clearly.";
                 
                 const userQuery = `Generate the financial proposal summary for this data: Location: ${location}, Estimated system size: ${size} kWp, Estimated monthly savings: ₹${savings}, Total Subsidy: ₹${subsidy}.`;
 
@@ -667,11 +677,11 @@
                     });
                     
                     const result = await response.json();
-                    return result.candidates?.[0]?.content?.parts?.[0]?.text || "Could not generate report. The AI service might be unavailable.";
+                    return result.candidates?.[0]?.content?.parts?.[0]?.text || clientFallbackText; // Fallback to client text if AI fails to return content
                     
                 } catch (error) {
                     console.error("Gemini API Error:", error);
-                    return `<p class="text-red-500">Error generating the detailed report. API request failed. Check console for details.</p>`;
+                    return clientFallbackText; // Return client text on API failure
                 }
             }
 

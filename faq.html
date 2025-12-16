@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ - Solarastra</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f7fafc; }
+        .card-shadow { box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+    </style>
+</head>
+<body>
+    <!-- Navigation Header (Matched to index.html) -->
+    <header class="bg-white shadow-lg sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <!-- Logo -->
+                <a href="index.html" class="flex items-center space-x-2">
+                    <img src="logo-orange.jpg" onerror="this.onerror=null;this.src='https://placehold.co/40x40/f97316/ffffff?text=SA';" alt="Solarastra Logo" class="h-10 w-auto rounded-full shadow-md">
+                    <span class="text-2xl font-extrabold text-gray-800">Solarastra</span>
+                </a>
+                <!-- Nav Links -->
+                <nav class="hidden md:flex space-x-8 items-center">
+                    <a href="index.html" class="text-gray-600 hover:text-green-600 transition duration-300">Calculator</a>
+                    <a href="warranty.html" class="text-gray-600 hover:text-green-600 transition duration-300">Assurance & Warranty</a>
+                    <a href="faq.html" class="text-green-600 font-bold hover:text-green-800 transition duration-300">FAQ</a>
+                    <a href="epc-login.html" class="px-6 py-2 bg-yellow-500 text-white font-semibold rounded-full shadow-lg hover:bg-yellow-600 transition duration-300 transform hover:scale-105">EPC Portal</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content - FAQ -->
+    <main class="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <h1 class="text-4xl font-extrabold text-gray-900 mb-12 text-center border-b pb-4">Frequently Asked Questions</h1>
+
+        <div class="space-y-6">
+            <!-- FAQ Item 1 -->
+            <div class="bg-white p-6 rounded-xl card-shadow border-l-4 border-green-500">
+                <h2 class="text-xl font-extrabold text-gray-800 mb-2 cursor-pointer flex justify-between items-center" onclick="toggleAnswer(this)">
+                    1. How long does the solar installation process take?
+                    <span class="text-green-500 font-normal text-2xl">+</span>
+                </h2>
+                <div class="text-gray-600 mt-2 hidden transition duration-300" id="answer1">
+                    <p>Typically, once permits are secured, the physical installation on your rooftop takes between 2 to 4 days, depending on the system size and roof complexity. The entire process from initial consultation to commissioning usually spans 4 to 8 weeks, primarily due to utility approvals.</p>
+                </div>
+            </div>
+
+            <!-- FAQ Item 2 -->
+            <div class="bg-white p-6 rounded-xl card-shadow border-l-4 border-yellow-500">
+                <h2 class="text-xl font-extrabold text-gray-800 mb-2 cursor-pointer flex justify-between items-center" onclick="toggleAnswer(this)">
+                    2. What happens to the solar power if I'm not home? (Net Metering)
+                    <span class="text-green-500 font-normal text-2xl">+</span>
+                </h2>
+                <div class="text-gray-600 mt-2 hidden transition duration-300" id="answer2">
+                    <p>In India, most rooftop solar systems are connected to the grid via **Net Metering**. Any excess electricity your panels generate is automatically fed back into the utility grid, and you receive a credit on your electricity bill for that energy. You only pay the utility for the 'net' amount of electricity you consume.</p>
+                </div>
+            </div>
+
+            <!-- FAQ Item 3 -->
+            <div class="bg-white p-6 rounded-xl card-shadow border-l-4 border-green-500">
+                <h2 class="text-xl font-extrabold text-gray-800 mb-2 cursor-pointer flex justify-between items-center" onclick="toggleAnswer(this)">
+                    3. Do you assist with subsidies and financing/loan options?
+                    <span class="text-green-500 font-normal text-2xl">+</span>
+                </h2>
+                <div class="text-gray-600 mt-2 hidden transition duration-300" id="answer3">
+                    <p>Absolutely. We are a one-stop-shop. Our team helps you navigate the complex process of securing Central Financial Assistance (CFA) subsidies from the government. We also have established partnerships with leading financial institutions to provide competitive loan options, ensuring you can convert your electricity bill into a sustainable EMI.</p>
+                </div>
+            </div>
+
+            <!-- FAQ Item 4 -->
+            <div class="bg-white p-6 rounded-xl card-shadow border-l-4 border-yellow-500">
+                <h2 class="text-xl font-extrabold text-gray-800 mb-2 cursor-pointer flex justify-between items-center" onclick="toggleAnswer(this)">
+                    4. What is the typical lifespan of a Solarastra system?
+                    <span class="text-green-500 font-normal text-2xl">+</span>
+                </h2>
+                <div class="text-gray-600 mt-2 hidden transition duration-300" id="answer4">
+                    <p>The solar panels we use are designed to last 25 years or more, with guaranteed performance output. Inverters typically have a lifespan of 10-15 years, and their replacement cost is minimal compared to the savings generated over time. We provide clear warranties for all components.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer (Matched to index.html) -->
+    <footer class="bg-gray-800 text-white mt-12">
+        <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 text-center">
+            <p>&copy; 2025 Solarastra. All rights reserved. Workmanship & Material Warranties Assured.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Simple script to toggle FAQ answers
+        function toggleAnswer(headerElement) {
+            const answerElement = headerElement.nextElementSibling;
+            const icon = headerElement.querySelector('span');
+            
+            answerElement.classList.toggle('hidden');
+            if (answerElement.classList.contains('hidden')) {
+                icon.textContent = '+';
+            } else {
+                icon.textContent = '-';
+            }
+        }
+    </script>
+</body>
+</html>
